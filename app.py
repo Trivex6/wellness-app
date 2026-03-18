@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # 2. Groq AI Engine Setup
-# Ensure GROQ_API_KEY is in your Streamlit Secrets!
+# Ensure GROQ_API_KEY is in your Streamlit Cloud Secrets!
 api_key = st.secrets.get("GROQ_API_KEY")
 client = Groq(api_key=api_key) if api_key else None
 
@@ -27,19 +27,18 @@ def get_serenity_response(user_text):
             max_tokens=150
         )
         reply = chat_completion.choices[0].message.content
-        # Escape characters that break JavaScript strings
         return reply.replace("`", "'").replace("\\", "/").replace("\n", " ")
     except Exception as e:
         return f"Serenity is resting: {str(e)}"
 
-# 3. DIRECT QUERY BRIDGE
+# 3. DEFENSIVE QUERY BRIDGE (Fixes the TypeError)
 ai_final_reply = ""
-# We use .get() to avoid the 'NoneType' error from your screenshot
+# Using .get() ensures that if 'msg' doesn't exist, it returns None instead of crashing
 user_query = st.query_params.get("msg")
 
 if user_query:
     ai_final_reply = get_serenity_response(user_query)
-    # Clear the parameter so the next page refresh is clean
+    # Clear parameters so the next page refresh is clean
     st.query_params.clear()
 
 # 4. File Loader
@@ -65,7 +64,7 @@ def load_frontend(reply_from_ai):
     except Exception as e:
         return f"<div style='color:white; padding:20px;'>File Error: {e}</div>"
 
-# 5. UI Cleanup (Removes Streamlit's default headers)
+# 5. UI Cleanup (Removes Streamlit default margins/headers)
 st.markdown("""
     <style>
     header, footer, #MainMenu {visibility: hidden; display: none;}
