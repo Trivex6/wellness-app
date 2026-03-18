@@ -1,78 +1,80 @@
 import streamlit as st
-import streamlit.components.v1 as components
 from groq import Groq
 
-# 1. Page Configuration
-st.set_page_config(
-    page_title="Serenity Wellness",
-    layout="wide", 
-    initial_sidebar_state="collapsed"
-)
+# ---------- CONFIG ----------
+st.set_page_config(page_title="Serenity AI", layout="wide")
 
-# 2. Groq AI Engine Setup
-# Ensure GROQ_API_KEY is in your Streamlit Cloud Secrets!
+# ---------- API ----------
 api_key = st.secrets.get("GROQ_API_KEY")
 client = Groq(api_key=api_key) if api_key else None
 
-def get_serenity_response(user_text):
-    if not client: return "System: Groq API Key is missing! 💙"
+def get_response(user_text):
+    if not client:
+        return "API key missing."
+
     try:
-        chat_completion = client.chat.completions.create(
+        res = client.chat.completions.create(
+            model="llama3-8b-8192",
             messages=[
-                {"role": "system", "content": "You are Serenity, a kind mental health assistant. Give very brief, warm, supportive advice."},
+                {"role": "system", "content": "You are Serenity, a calm and supportive mental health assistant. Keep responses short and warm."},
                 {"role": "user", "content": user_text}
             ],
-            model="llama3-8b-8192",
             temperature=0.7,
             max_tokens=150
         )
-        reply = chat_completion.choices[0].message.content
-        return reply.replace("`", "'").replace("\\", "/").replace("\n", " ")
+        return res.choices[0].message.content
     except Exception as e:
-        return f"Serenity is resting: {str(e)}"
+        return f"Error: {str(e)}"
 
-# 3. DEFENSIVE QUERY BRIDGE (Fixes the TypeError)
-ai_final_reply = ""
-# Using .get() ensures that if 'msg' doesn't exist, it returns None instead of crashing
-user_query = st.query_params.get("msg")
 
-if user_query:
-    ai_final_reply = get_serenity_response(user_query)
-    # Clear parameters so the next page refresh is clean
-    st.query_params.clear()
+# ---------- UI ----------
+st.title("💙 Serenity AI Companion")
 
-# 4. File Loader
-def load_frontend(reply_from_ai):
-    try:
-        with open("index.html", "r", encoding="utf-8") as f: html = f.read()
-        with open("style.css", "r", encoding="utf-8") as f: css = f.read()
-        with open("script.js", "r", encoding="utf-8") as f: js = f.read()
-        
-        return f"""
-        <!DOCTYPE html>
-        <html>
-            <head><style>{css}</style></head>
-            <body>
-                {html}
-                <script>
-                    window.SERENITY_REPLY = `{reply_from_ai}`;
-                    {js}
-                </script>
-            </body>
-        </html>
-        """
-    except Exception as e:
-        return f"<div style='color:white; padding:20px;'>File Error: {e}</div>"
+# Chat memory
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# 5. UI Cleanup (Removes Streamlit default margins/headers)
-st.markdown("""
-    <style>
-    header, footer, #MainMenu {visibility: hidden; display: none;}
-    .block-container { padding: 0rem !important; margin: 0rem !important; }
-    .stApp { background-color: #0f172a; }
-    iframe { width: 100vw !important; height: 100vh !important; border: none; }
-    </style>
-    """, unsafe_allow_html=True)
+# Display chat
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
 
-# 6. Render
-components.html(load_frontend(ai_final_reply), height=1000, scrolling=False)
+# Input
+user_input = st.chat_input("How are you feeling today?")
+
+if user_input:
+    # User message
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.write(user_input)
+
+    # AI response
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            reply = get_response(user_input)
+            st.write(reply)
+
+    st.session_state.messages.append({"role": "assistant", "content": reply})
+
+
+# ---------- EXTRA FEATURES (KEEP YOUR PROJECT VALUE) ----------
+
+st.sidebar.title("🌿 Wellness Tools")
+
+# Mood tracker
+st.sidebar.subheader("Mood Tracker")
+mood = st.sidebar.slider("How are you feeling?", 1, 5, 3)
+
+mood_labels = {
+    1: "😢 Struggling",
+    2: "😔 Down",
+    3: "😐 Neutral",
+    4: "🙂 Good",
+    5: "😄 Amazing"
+}
+st.sidebar.write(mood_labels[mood])
+
+# Breathing exercise
+st.sidebar.subheader("Breathing Exercise")
+if st.sidebar.button("Start Breathing"):
+    st.sidebar.write("Inhale... Hold... Exhale... Repeat 🌬️")
