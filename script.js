@@ -40,7 +40,7 @@ function sendMessage() {
     url.searchParams.set("msg", text);
 
     // Update URL WITHOUT full parent reload
-    //window.location.href = url.toString();
+    window.location.href = url.toString();
 }
 // Check for AI reply on load
 window.onload = () => {
