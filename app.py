@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # 2. Groq AI Engine Setup
-# Make sure GROQ_API_KEY is in your Streamlit Cloud Secrets!
+# Ensure GROQ_API_KEY is in your Streamlit Secrets!
 api_key = st.secrets.get("GROQ_API_KEY")
 client = Groq(api_key=api_key) if api_key else None
 
@@ -19,7 +19,7 @@ def get_serenity_response(user_text):
     try:
         chat_completion = client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are Serenity, a kind mental health assistant. Give very brief, warm advice."},
+                {"role": "system", "content": "You are Serenity, a kind mental health assistant. Give very brief, warm, supportive advice."},
                 {"role": "user", "content": user_text}
             ],
             model="llama3-8b-8192",
@@ -27,22 +27,22 @@ def get_serenity_response(user_text):
             max_tokens=150
         )
         reply = chat_completion.choices[0].message.content
-        # Clean the string for JavaScript safety
+        # Escape characters that break JavaScript strings
         return reply.replace("`", "'").replace("\\", "/").replace("\n", " ")
     except Exception as e:
         return f"Serenity is resting: {str(e)}"
 
-# 3. THE BRIDGE: Catching URL Messages
+# 3. DIRECT QUERY BRIDGE
 ai_final_reply = ""
-# Using direct dictionary access for speed
-params = st.query_params
-if "msg" in params:
-    user_query = params["msg"]
+# We use .get() to avoid the 'NoneType' error from your screenshot
+user_query = st.query_params.get("msg")
+
+if user_query:
     ai_final_reply = get_serenity_response(user_query)
-    # Clear parameters to prevent a refresh loop
+    # Clear the parameter so the next page refresh is clean
     st.query_params.clear()
 
-# 4. File Loader Logic
+# 4. File Loader
 def load_frontend(reply_from_ai):
     try:
         with open("index.html", "r", encoding="utf-8") as f: html = f.read()
@@ -65,7 +65,7 @@ def load_frontend(reply_from_ai):
     except Exception as e:
         return f"<div style='color:white; padding:20px;'>File Error: {e}</div>"
 
-# 5. UI Cleanup (Removes Streamlit's white bars)
+# 5. UI Cleanup (Removes Streamlit's default headers)
 st.markdown("""
     <style>
     header, footer, #MainMenu {visibility: hidden; display: none;}
@@ -75,5 +75,5 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 6. Render the App
+# 6. Render
 components.html(load_frontend(ai_final_reply), height=1000, scrolling=False)
