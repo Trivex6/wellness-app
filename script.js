@@ -29,19 +29,19 @@ function addMessage(text, isUser) {
 function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
-    
+
     addMessage(text, true);
     chatInput.value = '';
-    
-    // Create "Thinking" indicator
-    addMessage("Connecting to Serenity...", false);
 
-    // Force the parent window to reload with the message in the URL
-    // We target window.parent because the app is inside a Streamlit iframe
-    const baseUrl = window.parent.location.origin + window.parent.location.pathname;
-    window.parent.location.href = baseUrl + "?msg=" + encodeURIComponent(text);
+    addMessage("Thinking...", false);
+
+    // Instead of redirecting parent (broken on Streamlit Cloud)
+    const url = new URL(window.location.href);
+    url.searchParams.set("msg", text);
+
+    // Update URL WITHOUT full parent reload
+    //window.location.href = url.toString();
 }
-
 // Check for AI reply on load
 window.onload = () => {
     if (window.SERENITY_REPLY && window.SERENITY_REPLY !== "" && window.SERENITY_REPLY !== "None") {
