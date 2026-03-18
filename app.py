@@ -2,21 +2,15 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 
-# 1. Page Configuration
+# 1. Force Wide Layout but we will control the inner width via CSS
 st.set_page_config(
     page_title="Serenity Wellness",
-    layout="centered",
+    layout="wide", 
     initial_sidebar_state="collapsed"
 )
 
-# 2. File Loading Logic
 def load_frontend():
-    # Check if files exist in the current directory
-    files = os.listdir(".")
-    st.write(f"", unsafe_allow_html=True)
-    
     try:
-        # Load with explicit encoding to avoid Streamlit Cloud errors
         with open("index.html", "r", encoding="utf-8") as f:
             html = f.read()
         with open("style.css", "r", encoding="utf-8") as f:
@@ -24,12 +18,20 @@ def load_frontend():
         with open("script.js", "r", encoding="utf-8") as f:
             js = f.read()
 
-        # Inject CSS and JS into the HTML string
-        # We use a combined string to ensure everything loads simultaneously
+        # This combined string fixes the 'double centering' issue
         full_code = f"""
+        <!DOCTYPE html>
         <html>
             <head>
-                <style>{css}</style>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    {css}
+                    body {{ 
+                        margin: 0; 
+                        padding: 0; 
+                        overflow-x: hidden;
+                    }}
+                </style>
             </head>
             <body>
                 {html}
@@ -41,17 +43,36 @@ def load_frontend():
     except Exception as e:
         return f"<h2 style='color:white;'>Error Loading Files: {e}</h2>"
 
-# 3. UI Cleanup (Hides Streamlit's interface for a pure app look)
+# 2. THE CRITICAL PART: Remove Streamlit's default padding
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .stApp { margin-top: -80px; background-color: #0f172a; } /* Matches your dark theme */
-    iframe { border: none; }
+    /* Hide Header and Footer */
+    header, footer, #MainMenu {visibility: hidden;}
+    
+    /* Remove padding from the main Streamlit area */
+    .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Ensure the app background matches your dark theme */
+    .stApp {
+        background-color: #0f172a;
+    }
+    
+    /* Remove the gap at the top */
+    div[data-testid="stVerticalBlock"] > div:first-child {
+        margin-top: 0;
+    }
+    
+    iframe {
+        border: none;
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# 4. Render the App
+# 3. Render the App
 frontend_content = load_frontend()
-components.html(frontend_content, height=1200, scrolling=True)
+
+# Use width=None and height=1000 to fill the space
+components.html(frontend_content, height=1000, scrolling=False)
