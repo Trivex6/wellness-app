@@ -16,33 +16,37 @@ const moods = {
 };
 
 // --- Mood Section Logic ---
-moodSlider.addEventListener('input', (e) => {
-    const value = e.target.value;
-    const mood = moods[value];
-    moodEmoji.textContent = mood.emoji;
-    moodText.textContent = mood.text;
-    moodText.style.color = mood.color;
-    moodEmoji.style.animation = 'none';
-    void moodEmoji.offsetWidth; 
-    moodEmoji.style.animation = 'bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-});
+if(moodSlider) {
+    moodSlider.addEventListener('input', (e) => {
+        const value = e.target.value;
+        const mood = moods[value];
+        moodEmoji.textContent = mood.emoji;
+        moodText.textContent = mood.text;
+        moodText.style.color = mood.color;
+        moodEmoji.style.animation = 'none';
+        void moodEmoji.offsetWidth; 
+        moodEmoji.style.animation = 'bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    });
+}
 
-saveMoodBtn.addEventListener('click', () => {
-    const moodValue = moodSlider.value;
-    const mood = moods[moodValue];
-    const noteText = moodNote.value.trim() || 'No note added';
-    const now = new Date();
-    const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+if(saveMoodBtn) {
+    saveMoodBtn.addEventListener('click', () => {
+        const moodValue = moodSlider.value;
+        const mood = moods[moodValue];
+        const noteText = moodNote.value.trim() || 'No note added';
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    createHistoryItem(mood, noteText, timestamp, true);
-    
-    let moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
-    moodHistory.unshift({ mood: moodValue, note: noteText, timestamp: now.toISOString() });
-    localStorage.setItem('moodHistory', JSON.stringify(moodHistory.slice(0, 50)));
+        createHistoryItem(mood, noteText, timestamp, true);
+        
+        let moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
+        moodHistory.unshift({ mood: moodValue, note: noteText, timestamp: now.toISOString() });
+        localStorage.setItem('moodHistory', JSON.stringify(moodHistory.slice(0, 50)));
 
-    moodNote.value = '';
-    showNotification('Mood saved! Proud of you for checking in. 💙');
-});
+        moodNote.value = '';
+        showNotification('Mood saved! Proud of you for checking in. 💙');
+    });
+}
 
 function createHistoryItem(mood, note, time, prepend = false) {
     const historyItem = document.createElement('div');
@@ -76,12 +80,13 @@ navBtns.forEach(btn => {
     });
 });
 
-// --- Chat Section Logic (STRENGTHENED) ---
+// --- Chat Section Logic ---
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
 
 function addMessage(text, isUser) {
+    if(!chatMessages) return;
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -102,49 +107,30 @@ function sendMessage() {
     addMessage(message, true);
     chatInput.value = '';
     
-    // Show a small loading hint
-    const loadingDiv = document.createElement('div');
-    loadingDiv.id = "serenity-loading";
-    loadingDiv.style.color = "var(--primary-light)";
-    loadingDiv.style.padding = "10px";
-    loadingDiv.style.fontSize = "0.8rem";
-    loadingDiv.innerText = "Serenity is thinking...";
-    chatMessages.appendChild(loadingDiv);
-
-    // Use a slight delay to ensure the UI updates before the heavy reload
-    setTimeout(() => {
-        try {
-            // Get the base URL without existing parameters
-            const baseUrl = window.parent.location.origin + window.parent.location.pathname;
-            const newUrl = baseUrl + `?msg=${encodeURIComponent(message)}`;
-            
-            // Redirect the parent window
-            window.parent.location.assign(newUrl);
-        } catch (e) {
-            console.error("Redirection failed:", e);
-            window.parent.location.href = `/?msg=${encodeURIComponent(message)}`;
-        }
-    }, 100);
+    // Show local "Thinking" bubble
+    addMessage("Thinking...", false);
+    
+    // Redirect parent window with message in URL
+    // This forces the Python script to pick up 'msg' from query_params
+    const baseUrl = window.parent.location.origin + window.parent.location.pathname;
+    window.parent.location.assign(baseUrl + `?msg=${encodeURIComponent(message)}`);
 }
 
 // Handle AI response on page reload
 window.addEventListener('load', () => {
     loadMoodHistory();
-    
-    // If Python successfully sent a reply
+    // Check if Python injected a reply into the window
     if (window.SERENITY_REPLY && window.SERENITY_REPLY !== "" && window.SERENITY_REPLY !== "None") {
         addMessage(window.SERENITY_REPLY, false);
         
-        // Ensure we are looking at the Companion tab
+        // Auto-switch to chat tab if we have a reply
         const companionBtn = document.querySelector('[data-section="companion"]');
-        if (companionBtn) {
-            companionBtn.click();
-        }
+        if (companionBtn) companionBtn.click();
     }
 });
 
-sendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+if(sendBtn) sendBtn.addEventListener('click', sendMessage);
+if(chatInput) chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 
 // --- Breathing Section Logic ---
 let isBreathing = false;
@@ -170,20 +156,28 @@ function animateBreathing() {
     }, 4000);
 }
 
-document.getElementById('startBreathBtn').addEventListener('click', () => {
-    isBreathing = true;
-    animateBreathing();
-});
+const startBtn = document.getElementById('startBreathBtn');
+const stopBtn = document.getElementById('stopBreathBtn');
 
-document.getElementById('stopBreathBtn').addEventListener('click', () => {
-    isBreathing = false;
-    clearTimeout(breathingTimeout);
-    document.getElementById('breathingCircle').style.transform = 'scale(1)';
-    document.getElementById('breathingText').textContent = 'Ready?';
-});
+if(startBtn) {
+    startBtn.addEventListener('click', () => {
+        isBreathing = true;
+        animateBreathing();
+    });
+}
+
+if(stopBtn) {
+    stopBtn.addEventListener('click', () => {
+        isBreathing = false;
+        clearTimeout(breathingTimeout);
+        document.getElementById('breathingCircle').style.transform = 'scale(1)';
+        document.getElementById('breathingText').textContent = 'Ready?';
+    });
+}
 
 // --- Helpers ---
 function loadMoodHistory() {
+    if(!moodHistoryList) return;
     const moodHistory = JSON.parse(localStorage.getItem('moodHistory')) || [];
     moodHistoryList.innerHTML = '';
     moodHistory.slice(0, 10).forEach(item => {
@@ -196,7 +190,7 @@ function loadMoodHistory() {
 function showNotification(message) {
     const toast = document.createElement('div');
     toast.className = 'notification';
-    toast.style.cssText = `position:fixed; bottom:30px; right:30px; background:white; padding:1rem; border-radius:12px; box-shadow:0 10px 15px rgba(0,0,0,0.1); z-index:9999; font-weight:600; border-left: 5px solid #6366f1;`;
+    toast.style.cssText = `position:fixed; bottom:30px; right:30px; background:white; padding:1rem; border-radius:12px; box-shadow:0 10px 15px rgba(0,0,0,0.1); z-index:9999; font-weight:600; border-left: 5px solid #6366f1; color: #1e293b;`;
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
