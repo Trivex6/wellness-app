@@ -1,44 +1,11 @@
 // --- DOM Elements ---
-const moodSlider = document.getElementById('moodSlider');
-const moodEmoji = document.getElementById('moodEmoji');
-const moodText = document.getElementById('moodText');
-const saveMoodBtn = document.getElementById('saveMoodBtn');
-const moodNote = document.getElementById('moodNote');
-const moodHistoryList = document.getElementById('moodHistoryList');
+const navBtns = document.querySelectorAll('.nav-btn');
+const sections = document.querySelectorAll('.section');
 const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
 
-// --- Configuration ---
-const moods = {
-    1: { emoji: '😢', text: 'Struggling', color: '#ef4444' },
-    2: { emoji: '😔', text: 'Down', color: '#f59e0b' },
-    3: { emoji: '😐', text: 'Neutral', color: '#f59e0b' },
-    4: { emoji: '🙂', text: 'Good', color: '#10b981' },
-    5: { emoji: '😄', text: 'Amazing', color: '#6366f1' }
-};
-
-// --- Mood Tracking ---
-if(moodSlider) {
-    moodSlider.oninput = (e) => {
-        const mood = moods[e.target.value];
-        moodEmoji.textContent = mood.emoji;
-        moodText.textContent = mood.text;
-        moodText.style.color = mood.color;
-    };
-}
-
-if(saveMoodBtn) {
-    saveMoodBtn.onclick = () => {
-        showNotification('Mood saved! 💙');
-        moodNote.value = '';
-    };
-}
-
-// --- Navigation ---
-const navBtns = document.querySelectorAll('.nav-btn');
-const sections = document.querySelectorAll('.section');
-
+// --- Navigation Logic ---
 navBtns.forEach(btn => {
     btn.onclick = () => {
         const target = btn.getAttribute('data-section');
@@ -63,23 +30,26 @@ function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
     
+    // 1. Add user message locally so it feels fast
     addMessage(text, true);
     chatInput.value = '';
     
-    // Create "Thinking" indicator
+    // 2. Add temporary loading indicator
     addMessage("Connecting to Serenity...", false);
 
-    // BREAK OUT of iframe and reload parent with message
-    const currentUrl = window.parent.location.href.split('?')[0];
-    window.parent.location.href = currentUrl + "?msg=" + encodeURIComponent(text);
+    // 3. FORCE the parent window to reload with the message in the URL
+    // This is the only way for the Python script to see the new message
+    const baseUrl = window.parent.location.origin + window.parent.location.pathname;
+    window.parent.location.href = baseUrl + "?msg=" + encodeURIComponent(text);
 }
 
 // Check for AI reply on load
 window.onload = () => {
     if (window.SERENITY_REPLY && window.SERENITY_REPLY !== "" && window.SERENITY_REPLY !== "None") {
-        // Automatically switch to chat tab
+        // Automatically switch to the "Companion" tab to show the reply
         const companionBtn = document.querySelector('[data-section="companion"]');
         if (companionBtn) companionBtn.click();
+        
         addMessage(window.SERENITY_REPLY, false);
     }
 };
@@ -117,10 +87,23 @@ document.getElementById('stopBreathBtn').onclick = () => {
     bText.textContent = "Ready?";
 };
 
-function showNotification(msg) {
-    const n = document.createElement('div');
-    n.style.cssText = "position:fixed;bottom:20px;right:20px;background:#6366f1;color:white;padding:12px;border-radius:8px;z-index:9999;";
-    n.textContent = msg;
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 3000);
+// --- Mood Slider Logic ---
+const moodSlider = document.getElementById('moodSlider');
+const moodEmoji = document.getElementById('moodEmoji');
+const moodText = document.getElementById('moodText');
+const moods = {
+    1: { emoji: '😢', text: 'Struggling', color: '#ef4444' },
+    2: { emoji: '😔', text: 'Down', color: '#f59e0b' },
+    3: { emoji: '😐', text: 'Neutral', color: '#f59e0b' },
+    4: { emoji: '🙂', text: 'Good', color: '#10b981' },
+    5: { emoji: '😄', text: 'Amazing', color: '#6366f1' }
+};
+
+if(moodSlider) {
+    moodSlider.oninput = (e) => {
+        const mood = moods[e.target.value];
+        moodEmoji.textContent = mood.emoji;
+        moodText.textContent = mood.text;
+        moodText.style.color = mood.color;
+    };
 }
