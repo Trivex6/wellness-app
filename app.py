@@ -14,7 +14,7 @@ def get_response(user_text):
 
     try:
         res = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are Serenity, a calm and supportive mental health assistant. Keep responses short and warm."},
                 {"role": "user", "content": user_text}
