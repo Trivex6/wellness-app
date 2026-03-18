@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serenity | Mental Wellness</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo-section">
+                <span class="logo">🌿</span>
+                <h1>Serenity</h1>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-section="mood">
+                    <span class="icon">📊</span> Mood Tracker
+                </button>
+                <button class="nav-btn" data-section="chat">
+                    <span class="icon">💬</span> AI Companion
+                </button>
+                <button class="nav-btn" data-section="breathing">
+                    <span class="icon">🫁</span> Breathing
+                </button>
+                <button class="nav-btn" data-section="resources">
+                    <span class="icon">📚</span> Resources
+                </button>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <section id="mood" class="section active">
+                <div class="section-header">
+                    <h2>How are you today?</h2>
+                    <p>Track your emotional journey and notice the patterns.</p>
+                </div>
+                <div class="mood-container">
+                    <div class="mood-display">
+                        <div id="moodEmoji" class="mood-emoji">😐</div>
+                        <h3 id="moodText">Neutral</h3>
+                        <input type="range" id="moodSlider" min="1" max="5" value="3" class="slider">
+                        <textarea id="moodNote" placeholder="What's on your mind? (Optional)"></textarea>
+                        <button id="saveMoodBtn" class="primary-btn">Save Check-in</button>
+                    </div>
+                    <div class="history-section">
+                        <h3>Recent History</h3>
+                        <div id="moodHistoryList" class="history-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat" class="section">
+                <div class="section-header">
+                    <h2>Safe Space Chat</h2>
+                    <p>A non-judgmental space to vent or seek comfort.</p>
+                </div>
+                <div class="chat-container">
+                    <div id="chatMessages" class="chat-messages">
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                <p>Hi there. I'm here to listen. How has your day been truly feeling?</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Type your heart out...">
+                        <button id="sendBtn" class="primary-btn">Send</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="breathing" class="section">
+                <div class="section-header">
+                    <h2>Guided Breathing</h2>
+                    <p>Calm your nervous system in just a few minutes.</p>
+                </div>
+                <div class="breathing-visualization">
+                    <div id="breathingCircle" class="breathing-circle"></div>
+                    <h3 id="breathingText">Ready?</h3>
+                    <div class="cycle-info">Cycles Completed: <span id="cycleCounter">0</span></div>
+                    
+                    <div class="breathing-controls">
+                        <div class="control-group">
+                            <label>Inhale: <span id="inhaleValue">4</span>s</label>
+                            <input type="range" id="inhaleSlider" min="2" max="10" value="4">
+                        </div>
+                        <div class="control-group">
+                            <label>Hold: <span id="holdValue">4</span>s</label>
+                            <input type="range" id="holdSlider" min="0" max="10" value="4">
+                        </div>
+                        <div class="control-group">
+                            <label>Exhale: <span id="exhaleValue">4</span>s</label>
+                            <input type="range" id="exhaleSlider" min="2" max="10" value="4">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button id="startBreathBtn" class="primary-btn">Start</button>
+                        <button id="stopBreathBtn" class="secondary-btn" disabled>Stop</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="resources" class="section">
+                <div class="section-header">
+                    <h2>Helpful Resources</h2>
+                </div>
+                <div class="resource-grid">
+                    <div class="resource-card urgent">
+                        <h3>Emergency Help</h3>
+                        <p>If you are in immediate danger, please contact local emergency services or a crisis hotline.</p>
+                        <a href="#" class="resource-link">Global Hotlines →</a>
+                    </div>
+                    <div class="resource-card">
+                        <h3>Self-Care Tips</h3>
+                        <p>Small habits that can significantly impact your daily mental state.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
