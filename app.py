@@ -1,6 +1,5 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import os
 from groq import Groq
 
 # 1. Page Configuration
@@ -11,58 +10,49 @@ st.set_page_config(
 )
 
 # 2. Groq AI Engine Setup
-# Ensure GROQ_API_KEY is in Streamlit Cloud > Settings > Secrets
+# Make sure GROQ_API_KEY is in your Streamlit Cloud Secrets!
 api_key = st.secrets.get("GROQ_API_KEY")
 client = Groq(api_key=api_key) if api_key else None
 
 def get_serenity_response(user_text):
-    if not client:
-        return "System: Groq API Key is missing! 💙"
+    if not client: return "System: Groq API Key is missing! 💙"
     try:
         chat_completion = client.chat.completions.create(
             messages=[
-                {
-                    "role": "system",
-                    "content": "You are Serenity, a compassionate mental health assistant. Provide supportive, brief, and helpful advice. Stay concise."
-                },
+                {"role": "system", "content": "You are Serenity, a kind mental health assistant. Give very brief, warm advice."},
                 {"role": "user", "content": user_text}
             ],
             model="llama3-8b-8192",
             temperature=0.7,
-            max_tokens=200
+            max_tokens=150
         )
-        # Clean response for JS safety
         reply = chat_completion.choices[0].message.content
+        # Clean the string for JavaScript safety
         return reply.replace("`", "'").replace("\\", "/").replace("\n", " ")
     except Exception as e:
-        return f"Serenity is offline: {str(e)}"
+        return f"Serenity is resting: {str(e)}"
 
-# 3. The Bridge: Catching messages from the JS via URL
-# Using the most stable direct access method
-user_query = st.query_params.get("msg")
+# 3. THE BRIDGE: Catching URL Messages
 ai_final_reply = ""
-
-if user_query:
+# Using direct dictionary access for speed
+params = st.query_params
+if "msg" in params:
+    user_query = params["msg"]
     ai_final_reply = get_serenity_response(user_query)
-    # Clear parameters to prevent refresh loops
+    # Clear parameters to prevent a refresh loop
     st.query_params.clear()
 
-# 4. File Loader
+# 4. File Loader Logic
 def load_frontend(reply_from_ai):
     try:
-        # These files must exist in your GitHub repo
         with open("index.html", "r", encoding="utf-8") as f: html = f.read()
         with open("style.css", "r", encoding="utf-8") as f: css = f.read()
         with open("script.js", "r", encoding="utf-8") as f: js = f.read()
-
-        # Passing the AI reply into the global JS variable 'window.SERENITY_REPLY'
+        
         return f"""
         <!DOCTYPE html>
         <html>
-            <head>
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>{css}</style>
-            </head>
+            <head><style>{css}</style></head>
             <body>
                 {html}
                 <script>
@@ -73,21 +63,17 @@ def load_frontend(reply_from_ai):
         </html>
         """
     except Exception as e:
-        return f"<h2 style='color:white;'>Error Loading Files: {e}</h2>"
+        return f"<div style='color:white; padding:20px;'>File Error: {e}</div>"
 
-# 5. UI Cleanup (Removes Streamlit's default padding/header)
+# 5. UI Cleanup (Removes Streamlit's white bars)
 st.markdown("""
     <style>
     header, footer, #MainMenu {visibility: hidden; display: none;}
-    .block-container {
-        padding: 0rem !important;
-        margin: 0rem !important;
-        max-width: 100% !important;
-    }
+    .block-container { padding: 0rem !important; margin: 0rem !important; }
     .stApp { background-color: #0f172a; }
     iframe { width: 100vw !important; height: 100vh !important; border: none; }
     </style>
     """, unsafe_allow_html=True)
 
-# 6. Render Dashboard
+# 6. Render the App
 components.html(load_frontend(ai_final_reply), height=1000, scrolling=False)
