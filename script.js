@@ -5,7 +5,7 @@ const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const chatMessages = document.getElementById('chatMessages');
 
-// --- Navigation Logic ---
+// --- Navigation ---
 navBtns.forEach(btn => {
     btn.onclick = () => {
         const target = btn.getAttribute('data-section');
@@ -30,15 +30,14 @@ function sendMessage() {
     const text = chatInput.value.trim();
     if (!text) return;
     
-    // 1. Add user message locally so it feels fast
     addMessage(text, true);
     chatInput.value = '';
     
-    // 2. Add temporary loading indicator
+    // Create "Thinking" indicator
     addMessage("Connecting to Serenity...", false);
 
-    // 3. FORCE the parent window to reload with the message in the URL
-    // This is the only way for the Python script to see the new message
+    // Force the parent window to reload with the message in the URL
+    // We target window.parent because the app is inside a Streamlit iframe
     const baseUrl = window.parent.location.origin + window.parent.location.pathname;
     window.parent.location.href = baseUrl + "?msg=" + encodeURIComponent(text);
 }
@@ -46,7 +45,7 @@ function sendMessage() {
 // Check for AI reply on load
 window.onload = () => {
     if (window.SERENITY_REPLY && window.SERENITY_REPLY !== "" && window.SERENITY_REPLY !== "None") {
-        // Automatically switch to the "Companion" tab to show the reply
+        // Automatically switch to companion tab
         const companionBtn = document.querySelector('[data-section="companion"]');
         if (companionBtn) companionBtn.click();
         
@@ -87,7 +86,7 @@ document.getElementById('stopBreathBtn').onclick = () => {
     bText.textContent = "Ready?";
 };
 
-// --- Mood Slider Logic ---
+// --- Mood Tracking ---
 const moodSlider = document.getElementById('moodSlider');
 const moodEmoji = document.getElementById('moodEmoji');
 const moodText = document.getElementById('moodText');
